@@ -1,4 +1,4 @@
-# plint: disable=all
+# pylint: disable=all
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
@@ -38,13 +38,16 @@ def chart_select_view(request):
     price = None
 
     try:
+        # aqui transformamos em um dataframe de dicionarios, vindo de um queryset
         product_df = pd.DataFrame(Product.objects.all().values())
         purchase_df = pd.DataFrame(Purchase.objects.all().values())
+        print(product_df)
+
         product_df['product_id'] = product_df['id']
 
         if purchase_df.shape[0] > 0:
             df = pd.merge(
-                purchase_df, product_df, 
+                purchase_df, product_df,
                 on='product_id'
             ).drop(
                 ['id_y', 'date_y'],
@@ -64,7 +67,7 @@ def chart_select_view(request):
 
                 if chart_type != "":
                     if date_from != "" and date_to != "":
-                        df = df[(df['date']>date_from) & (df['date']< date_to)]
+                        df = df[(df['date'] > date_from) & (df['date'] < date_to)]
                         df2 = df.groupby('date', as_index=False)['total_price'].agg('sum')
                     graph = get_simple_plot(chart_type, x=df2['date'], y=df2['total_price'], data=df)
                 else:
@@ -72,11 +75,12 @@ def chart_select_view(request):
 
         else:
             error_message = 'No records in the database'
-    except:
+    except:  # noqa: E722
         product_df = None
         purchase_df = None
         error_message = 'No records in the database'
 
+    # estou passando os dados para o template usando o context
     context = {
         'graph': graph,
         'price': price,
@@ -88,7 +92,7 @@ def chart_select_view(request):
 # @login_required
 def add_purchase_view(request):
     form = PurchaseForm(request.POST or None)
-    added_message=None
+    added_message = None
 
     if form.is_valid():
         obj = form.save(commit=False)
